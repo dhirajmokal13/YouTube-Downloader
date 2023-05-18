@@ -13,6 +13,7 @@ if playlist_option['playlist'] == 'Predefined Playlist':
     resolution_option = inquirer.prompt(res)
     count = 0
     print(f"\n \033[92m {playlist.title} | {playlist.owner} | Videos {playlist.length} \033[0m ")
+    ext='mp4'
     for url in playlist:
         count += 1
         video = YouTube(url, on_progress_callback=on_progress)
@@ -24,6 +25,7 @@ if playlist_option['playlist'] == 'Predefined Playlist':
             stream_choosed = video.streams.get_lowest_resolution()
         elif resolution_option["resolution"] == 'Only Audio':
             stream_choosed = video.streams.get_audio_only()
+            ext='mp3'
         else:
             stream_choosed = video.streams.filter(file_extension='mp4', resolution=resolution_option["resolution"]).first()
             
@@ -36,12 +38,12 @@ if playlist_option['playlist'] == 'Predefined Playlist':
         output_path = os.path.join("Download", output_folder_name)
         os.makedirs(output_path, exist_ok=True)
     
-        file_name = f"{count}. {video.title.replace('|', '_')}.mp4"
+        file_name = f"{count}. {video.title.replace('|', '_')}.{ext}"
         file_path = os.path.join(output_path, file_name)
         
         stream.download(output_path=output_path, filename=file_name)
     
-        print(f"\033[91m Downloaded \033[94m Resolution: {resolution_option['resolution']} \033[92m Size: {stream.filesize_mb:.2f} MB \033[0m")
+        print(f"\033[91m Downloaded \033[94m Resolution: {stream_choosed.resolution} \033[92m Size: {stream.filesize_mb:.2f} MB \033[0m")
 
 elif playlist_option['playlist'] == 'Create Own Playlist':
     playlist_own = set()
@@ -66,6 +68,7 @@ elif playlist_option['playlist'] == 'Create Own Playlist':
         res = [inquirer.List("resolution", message="\033[92m Select the Resolution for Videos \033[0m", choices=["Highest Resolution","1080p","720p","480p","Lowest Resolution","Only Audio",])]
         resolution_option = inquirer.prompt(res)
         count = 0
+        ext = 'mp4'
         for url in playlist_own:
             count+=1
             try:
@@ -77,13 +80,14 @@ elif playlist_option['playlist'] == 'Create Own Playlist':
                     stream_choosed = video.streams.get_lowest_resolution()
                 elif resolution_option["resolution"] == 'Only Audio':
                     stream_choosed = video.streams.get_audio_only()
+                    ext='mp3'
                 else:
                     stream_choosed = video.streams.filter(file_extension='mp4', resolution=resolution_option["resolution"]).first()
                 if stream_choosed is not None: 
-                   file_name = f"{count}. {video.title.replace('|', '_')}.mp4"
+                   file_name = f"{count}. {video.title.replace('|', '_')}.{ext}"
                    file_path = os.path.join(output_path, file_name)
                    stream_choosed.download(output_path=output_path, filename=file_name)
-                   print(f"\033[91m Downloaded \033[94m Resolution: {resolution_option['resolution']} \033[92m Size: {stream_choosed.filesize_mb:.2f} MB \033[0m")
+                   print(f"\033[91m Downloaded \033[94m Resolution: {stream_choosed.resolution} \033[92m Size: {stream_choosed.filesize_mb:.2f} MB \033[0m")
                 else:
                     print(f'No {stream_choosed} resolution available for {video.title}')
                     continue
