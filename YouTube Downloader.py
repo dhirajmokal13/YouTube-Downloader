@@ -100,4 +100,4 @@ elif playlist_option['playlist'] == 'Create Own Playlist':
                 print(f'\033[91m{e}\033[0m')
                 continue
 
-input("\n\n\033[91mPress Enter to Exit\033[94m")
+input("\n\n\033[91mPress Enter to Exit\033[0m")
