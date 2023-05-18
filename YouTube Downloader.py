@@ -3,9 +3,13 @@ from pytube import Playlist
 from pytube.cli import on_progress
 import os
 import inquirer
+import re
 
 os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(os.path.dirname(__file__), "certifi", "cacert.pem")
 playlist_option = inquirer.prompt([inquirer.List("playlist", message="\033[92m Choose Playlist Option\033[0m", choices=["Create Own Playlist","Predefined Playlist",])])
+
+def replace_invalid_characters(title):
+    return re.sub(r'[|#:?]', '_', title)
     
 if playlist_option['playlist'] == 'Predefined Playlist':
     playlist = Playlist(input("Enter the URL of the playlist: "))
@@ -38,7 +42,7 @@ if playlist_option['playlist'] == 'Predefined Playlist':
         output_path = os.path.join("Download", output_folder_name)
         os.makedirs(output_path, exist_ok=True)
     
-        file_name = f"{count}. {video.title.replace('|', '_')}.{ext}"
+        file_name = f"{count}. {replace_invalid_characters(video.title)}.{ext}"
         file_path = os.path.join(output_path, file_name)
         
         stream.download(output_path=output_path, filename=file_name)
@@ -84,7 +88,7 @@ elif playlist_option['playlist'] == 'Create Own Playlist':
                 else:
                     stream_choosed = video.streams.filter(file_extension='mp4', resolution=resolution_option["resolution"]).first()
                 if stream_choosed is not None: 
-                   file_name = f"{count}. {video.title.replace('|', '_')}.{ext}"
+                   file_name = f"{count}. {replace_invalid_characters(video.title)}.{ext}"
                    file_path = os.path.join(output_path, file_name)
                    stream_choosed.download(output_path=output_path, filename=file_name)
                    print(f"\033[91m Downloaded \033[94m Resolution: {stream_choosed.resolution} \033[92m Size: {stream_choosed.filesize_mb:.2f} MB \033[0m")
