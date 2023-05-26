@@ -9,7 +9,7 @@ os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(os.path.dirname(__file__), "cert
 playlist_option = inquirer.prompt([inquirer.List("playlist", message="\033[92m Choose Playlist Option\033[0m", choices=["Create Own Playlist","Predefined Playlist",])])
 
 def replace_invalid_characters(title):
-    return re.sub(r'[|#:?]', '_', title)
+    return re.sub(r'[<>:"/\|?*]', '_', title)
     
 if playlist_option['playlist'] == 'Predefined Playlist':
     playlist = Playlist(input("Enter the URL of the playlist: "))
@@ -19,36 +19,40 @@ if playlist_option['playlist'] == 'Predefined Playlist':
     print(f"\n \033[92m {playlist.title} | {playlist.owner} | Videos {playlist.length} \033[0m ")
     ext='mp4'
     for url in playlist:
-        count += 1
-        video = YouTube(url, on_progress_callback=on_progress)
-        print(f"\n\n{count}. {video.title}")
-    
-        if resolution_option["resolution"] == 'Highest Resolution':
-            stream_choosed = video.streams.get_highest_resolution()
-        elif resolution_option["resolution"] == 'Lowest Resolution':
-            stream_choosed = video.streams.get_lowest_resolution()
-        elif resolution_option["resolution"] == 'Only Audio':
-            stream_choosed = video.streams.get_audio_only()
-            ext='mp3'
-        else:
-            stream_choosed = video.streams.filter(file_extension='mp4', resolution=resolution_option["resolution"]).first()
-            
-        if stream_choosed is not None:
-            stream = stream_choosed
-        else:
-            print(f'No {stream_choosed} resolution available for {video.title}')
-            continue
-        output_folder_name = f"{playlist.title.replace('|', '')} - {playlist.owner.replace('|', '')}"
-        output_path = os.path.join("Download", output_folder_name)
-        os.makedirs(output_path, exist_ok=True)
-    
-        file_name = f"{count}. {replace_invalid_characters(video.title)}.{ext}"
-        file_path = os.path.join(output_path, file_name)
+        try:
+            count += 1
+            video = YouTube(url, on_progress_callback=on_progress)
+            print(f"\n\n{count}. {video.title}")
         
-        stream.download(output_path=output_path, filename=file_name)
-    
-        print(f"\033[91m Downloaded \033[94m Resolution: {stream_choosed.resolution} \033[92m Size: {stream.filesize_mb:.2f} MB \033[0m")
-
+            if resolution_option["resolution"] == 'Highest Resolution':
+                stream_choosed = video.streams.get_highest_resolution()
+            elif resolution_option["resolution"] == 'Lowest Resolution':
+                stream_choosed = video.streams.get_lowest_resolution()
+            elif resolution_option["resolution"] == 'Only Audio':
+                stream_choosed = video.streams.get_audio_only()
+                ext='mp3'
+            else:
+                stream_choosed = video.streams.filter(file_extension='mp4', resolution=resolution_option["resolution"]).first()
+                
+            if stream_choosed is not None:
+                stream = stream_choosed
+            else:
+                print(f'No {stream_choosed} resolution available for {video.title}')
+                continue
+            output_folder_name = f"{playlist.title.replace('|', '')} - {playlist.owner.replace('|', '')}"
+            output_path = os.path.join("Download", output_folder_name)
+            os.makedirs(output_path, exist_ok=True)
+        
+            file_name = f"{count}. {replace_invalid_characters(video.title)}.{ext}"
+            file_path = os.path.join(output_path, file_name)
+            
+            stream.download(output_path=output_path, filename=file_name)
+        
+            print(f"\033[91m Downloaded \033[94m Resolution: {stream_choosed.resolution} \033[92m Size: {stream.filesize_mb:.2f} MB \033[0m")
+        except Exception as e:
+            print(e)
+            input("\n\n\033[91mPress Enter to Exit\033[0m")
+            
 elif playlist_option['playlist'] == 'Create Own Playlist':
     playlist_own = set()
     while True:
