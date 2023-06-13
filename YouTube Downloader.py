@@ -4,16 +4,19 @@ from pytube.cli import on_progress
 import os
 import inquirer
 import re
+import ctypes
 
+ctypes.windll.kernel32.SetConsoleTitleW("Youtube Downloader")
+errors = []
 os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(os.path.dirname(__file__), "certifi", "cacert.pem")
-playlist_option = inquirer.prompt([inquirer.List("playlist", message="\033[92m Choose Playlist Option\033[0m", choices=["Create Own Playlist","Predefined Playlist",])])
+playlist_option = inquirer.prompt([inquirer.List("playlist", message="\033[92m Choose Playlist Option\033[0m", choices=["Create Playlist","Download Playlist",])])
 
 def replace_invalid_characters(title):
     return re.sub(r'[<>:"/\|?*]', '_', title)
     
-if playlist_option['playlist'] == 'Predefined Playlist':
+if playlist_option['playlist'] == 'Download Playlist':
     playlist = Playlist(input("Enter the URL of the playlist: "))
-    res = [inquirer.List("resolution", message="\033[92m Select the Resolution for Videos \033[0m", choices=["Highest Resolution","1080p","720p","480p","Lowest Resolution","Only Audio",])]
+    res = [inquirer.List("resolution", message="\033[92m Select the Resolution for Videos \033[0m", choices=["Select Highest Resolution","1080p","720p","480p","Select Lowest Resolution","Select Only Audio",])]
     resolution_option = inquirer.prompt(res)
     count = 0
     print(f"\n \033[92m {playlist.title} | {playlist.owner} | Videos {playlist.length} \033[0m ")
@@ -22,13 +25,14 @@ if playlist_option['playlist'] == 'Predefined Playlist':
         try:
             count += 1
             video = YouTube(url, on_progress_callback=on_progress)
+            
             print(f"\n\n{count}. {video.title}")
         
-            if resolution_option["resolution"] == 'Highest Resolution':
+            if resolution_option["resolution"] == 'Select Highest Resolution':
                 stream_choosed = video.streams.get_highest_resolution()
-            elif resolution_option["resolution"] == 'Lowest Resolution':
+            elif resolution_option["resolution"] == 'Select Lowest Resolution':
                 stream_choosed = video.streams.get_lowest_resolution()
-            elif resolution_option["resolution"] == 'Only Audio':
+            elif resolution_option["resolution"] == 'Select Only Audio':
                 stream_choosed = video.streams.get_audio_only()
                 ext='mp3'
             else:
@@ -50,10 +54,14 @@ if playlist_option['playlist'] == 'Predefined Playlist':
         
             print(f"\033[91m Downloaded \033[94m Resolution: {stream_choosed.resolution} \033[92m Size: {stream.filesize_mb:.2f} MB \033[0m")
         except Exception as e:
-            print(e)
-            input("\n\n\033[91mPress Enter to Exit\033[0m")
+            print(f'\033[91m{e}\033[0m')
+            errors.append(file_name)
+            if(len(errors) > 3) : break
+            continue
+    print(errors)
+    input("\n\n\033[91mPress Enter to Exit\033[0m")
             
-elif playlist_option['playlist'] == 'Create Own Playlist':
+elif playlist_option['playlist'] == 'Create Playlist':
     playlist_own = set()
     while True:
         add_to_playlist = inquirer.prompt([inquirer.List("add_to_playlist", message="\033[92m Add More Videos\033[0m", choices=["Yes","No","Show Playlist"])])
@@ -73,7 +81,7 @@ elif playlist_option['playlist'] == 'Create Own Playlist':
         playlist_name = input('Enter the Playlist Name: ')
         output_path = os.path.join("Download", playlist_name)
         os.makedirs(output_path, exist_ok=True)
-        res = [inquirer.List("resolution", message="\033[92m Select the Resolution for Videos \033[0m", choices=["Highest Resolution","1080p","720p","480p","Lowest Resolution","Only Audio",])]
+        res = [inquirer.List("resolution", message="\033[92m Select the Resolution for Videos \033[0m", choices=["Select Highest Resolution","1080p","720p","480p","Select Lowest Resolution","Select Only Audio",])]
         resolution_option = inquirer.prompt(res)
         count = 0
         ext = 'mp4'
@@ -82,11 +90,11 @@ elif playlist_option['playlist'] == 'Create Own Playlist':
             try:
                 video = YouTube(url, on_progress_callback=on_progress)
                 print(f"\n\n{count}. {video.title}")
-                if resolution_option["resolution"] == 'Highest Resolution':
+                if resolution_option["resolution"] == 'Select Highest Resolution':
                     stream_choosed = video.streams.get_highest_resolution()
-                elif resolution_option["resolution"] == 'Lowest Resolution':
+                elif resolution_option["resolution"] == 'Select Lowest Resolution':
                     stream_choosed = video.streams.get_lowest_resolution()
-                elif resolution_option["resolution"] == 'Only Audio':
+                elif resolution_option["resolution"] == 'Select Only Audio':
                     stream_choosed = video.streams.get_audio_only()
                     ext='mp3'
                 else:
